@@ -1,0 +1,83 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!181963792 &2655988077585873504
+Preset:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: TerrainGenerator
+  m_TargetType:
+    m_NativeTypeID: 114
+    m_ManagedTypePPtr: {fileID: 11500000, guid: 23238c96cdc33bb4faa5b65fbf1464d3,
+      type: 3}
+    m_ManagedTypeFallback: 
+  m_Properties:
+  - target: {fileID: 0}
+    propertyPath: m_Enabled
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: m_EditorHideFlags
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: m_EditorClassIdentifier
+    value: 
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: colliderLODIndex
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: detailLevels.Array.size
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: detailLevels.Array.data[0].lod
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: detailLevels.Array.data[0].visibleDistanceThreshold
+    value: 75
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: detailLevels.Array.data[1].lod
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: detailLevels.Array.data[1].visibleDistanceThreshold
+    value: 500
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: detailLevels.Array.data[2].lod
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: detailLevels.Array.data[2].visibleDistanceThreshold
+    value: 1000
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: viewer
+    value: 
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: mapMaterial
+    value: 
+    objectReference: {fileID: 2100000, guid: 1e2a7830ac2c67740ac9d86640dc7ec8, type: 2}
+  - target: {fileID: 0}
+    propertyPath: erosion
+    value: 
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: meshSettings
+    value: 
+    objectReference: {fileID: 11400000, guid: e56e7ab596b0c304089c8b14becba4bd, type: 2}
+  - target: {fileID: 0}
+    propertyPath: heightMapSettings
+    value: 
+    objectReference: {fileID: 11400000, guid: 60781a906fb4ed0469b721e7ae3a14ca, type: 2}
+  - target: {fileID: 0}
+    propertyPath: textureSettings
+    value: 
+    objectReference: {fileID: 11400000, guid: 79f01fca90412d54fb67813b7ade475d, type: 2}
