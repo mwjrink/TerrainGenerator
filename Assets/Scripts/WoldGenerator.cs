@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TerrainGenerator : MonoBehaviour
+public class WoldGenerator : MonoBehaviour
 {
     const float viewerMoveThresholdForChunkUpdate = 25.0f;
     const float sqrViewerMoveThresholdForChunkUpdate = viewerMoveThresholdForChunkUpdate * viewerMoveThresholdForChunkUpdate;
@@ -106,3 +105,13 @@ public class TerrainGenerator : MonoBehaviour
         }
     }
 }
+
+//[Serializable]
+//public struct LODInfo
+//{
+//    [Range(0, MeshSettings.numberSupportedLODs - 1)]
+//    public int lod;
+//    public float visibleDistanceThreshold;
+
+//    public float sqrVisibleDistanceThreshold => visibleDistanceThreshold * visibleDistanceThreshold;
+//}
