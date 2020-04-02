@@ -28,6 +28,8 @@ public class TerrainGenerator : MonoBehaviour
     Dictionary<Vector2, TerrainChunk> terrainChunkDict = new Dictionary<Vector2, TerrainChunk>();
     List<TerrainChunk> visibleTerrainChunks = new List<TerrainChunk>();
 
+    public int worldSize;
+
     void Start()
     {
         //textureSettings.ApplyToMaterial(mapMaterial);

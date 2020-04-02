@@ -17,13 +17,13 @@ public class ThreadedDataRequester : MonoBehaviour
         instance = FindObjectOfType<ThreadedDataRequester>();
     }
 
-    public static void RequestData(Func<object> generateData, Action<object> callback)
+    public static void RequestData(Func<dynamic> generateData, Action<dynamic> callback)
     {
         // TODO: @Max, add cancellation token (ALWAYS)
         Task.Run(() => instance.DataThread(generateData, callback));
     }
 
-    void DataThread(Func<object> generateData, Action<object> callback)
+    void DataThread(Func<dynamic> generateData, Action<dynamic> callback)
     {
         var data = generateData();
 
@@ -40,10 +40,10 @@ public class ThreadedDataRequester : MonoBehaviour
 
     struct ThreadInfo
     {
-        public readonly object parameter;
-        public readonly Action<object> callback;
+        public readonly dynamic parameter;
+        public readonly Action<dynamic> callback;
 
-        public ThreadInfo(object parameter, Action<object> callback)
+        public ThreadInfo(dynamic parameter, Action<dynamic> callback)
         {
             this.parameter = parameter;
             this.callback = callback;

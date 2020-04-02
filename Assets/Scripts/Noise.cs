@@ -8,9 +8,30 @@ public class Noise
     public enum NormalizeMode
     {
         Local,
-        Global
+        Global,
+        None,
+        Test
     }
     //private static Perlin perlin;
+
+    public static NoiseSettings worldNoiseSettings;
+
+    public static float[,] SampleWorldMap(int chunkSize, Vector2 sampleCenter, int? worldSeed = null)
+    {
+        if (worldNoiseSettings == null)
+        {
+            worldNoiseSettings = new NoiseSettings();
+            worldNoiseSettings.persistence = 0.6f;
+            worldNoiseSettings.octaves = 1;
+            worldNoiseSettings.lacunarity = 2.0f;
+            worldNoiseSettings.offset = Vector2.zero;
+            worldNoiseSettings.seed = worldSeed ?? 1;
+            worldNoiseSettings.scale = 5000;
+            worldNoiseSettings.normalizeMode = NormalizeMode.None;
+        }
+       
+        return GenerateNoiseMap(chunkSize, chunkSize, worldNoiseSettings, sampleCenter);
+    }
 
     public static float[,] GenerateNoiseMap(int mapWidth, int mapHeight, NoiseSettings settings, Vector2 sampleCenter)
     {
@@ -38,8 +59,8 @@ public class Noise
         if (settings.scale <= 0)
             settings.scale = 0.0001f;
 
-        var maxLocalNoiseHeight = System.Single.MinValue;
-        var minLocalNoiseHeight = System.Single.MaxValue;
+        var maxLocalNoiseHeight = Single.MinValue;
+        var minLocalNoiseHeight = Single.MaxValue;
 
         var halfWidth = mapWidth / 2.0f;
         var halfHeight = mapHeight / 2.0f;
@@ -82,6 +103,15 @@ public class Noise
                 for (var x = 0; x < mapHeight; x++)
                 {
                     noiseMap[x, y] = Mathf.InverseLerp(minLocalNoiseHeight, maxLocalNoiseHeight, noiseMap[x, y]);
+                }
+        }
+
+        if (settings.normalizeMode == NormalizeMode.Test)
+        {
+            for (var y = 0; y < mapHeight; y++)
+                for (var x = 0; x < mapHeight; x++)
+                {
+                    noiseMap[x, y] = 1;
                 }
         }
 

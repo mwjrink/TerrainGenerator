@@ -20,6 +20,35 @@ public static class FalloffGenerator
         return map;
     }
 
+    public static float[,] GenerateFalloffChunkMap(int mapSize, int chunkSize, Vector2 sampleCenter)
+    {
+        float dist = mapSize * 0.1f;
+        var map = new float[chunkSize, chunkSize];
+
+        for (var j = 0; j < chunkSize; j++)
+            for (var i = 0; i < chunkSize; i++)
+            {
+                var x = i + sampleCenter.x - (chunkSize / 2);
+                var y = j + sampleCenter.y - (chunkSize / 2);
+
+                map[i, j] = 1;
+
+                if (x + dist > mapSize)
+                {
+                    map[i, j] *= (mapSize - x) / dist;
+                }
+
+                if (y + dist > mapSize)
+                {
+                    map[i, j] *= (mapSize - y) / dist;
+                }
+
+                // map[i, j] = Evaluate(Mathf.Max(Mathf.Abs(x), Mathf.Abs(y)));
+            }
+
+        return map;
+    }
+
     // TODO: @Max, this is slow, but it is only run once so meh?
     static float Evaluate(float value)
     {
