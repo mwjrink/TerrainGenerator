@@ -3,7 +3,7 @@ using System;
 using UnityEngine;
 using Unity.Collections;
 
-public struct Perlin : IPerlinNoise
+public struct Perlin
 {
     public int repeat;
     public int seed;
@@ -70,25 +70,6 @@ public struct Perlin : IPerlinNoise
 
             amplitude *= persistence;
             frequency *= 2;
-        }
-
-        return total / maxValue;
-    }
-
-    float IPerlinNoise.fbm(float x, float y, float z, float scale, int octaves, float lacunarity, float gain)
-    {
-        float total = 0;
-        float frequency = 1;
-        float amplitude = 1;
-        float maxValue = 0;            // Used for normalizing result to 0.0 - 1.0
-        for (int i = 0; i < octaves; i++)
-        {
-            total += perlin(x * frequency, y * frequency, z * frequency) * amplitude;
-
-            maxValue += amplitude;
-
-            amplitude *= gain;
-            frequency *= lacunarity;
         }
 
         return total / maxValue;

@@ -5,11 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-public interface IPerlinNoise
-{
-    float fbm(float x, float y, float z, float scale = 1f, int octaves = 1, float lacunarity = 2f, float gain = 0.5f);
-}
-
 public class TestGenerator
 {
     public struct Biome
@@ -254,7 +249,7 @@ public class TestGenerator
     }
 
     // TODO: @Max, data etc is super memory and cpu inefficien. Not an issue for smaller maps but it is for huge maps.
-    public static T[,] DomainWarpMap<T>(T[,] original, int width, int height, T fallback, IPerlinNoise perlin, float warpingAmplitude = 80.0f, float adjustmentFactor = 1.2f) // NoiseSettings settings { seed, scale, ... }
+    public static T[,] DomainWarpMap<T>(T[,] original, int width, int height, int seed, T fallback, float warpingAmplitude = 80.0f, float adjustmentFactor = 1.2f) // NoiseSettings settings { seed, scale, ... }
     {
         // domain warping in js
         var adjustedWidth = Mathf.RoundToInt(width * adjustmentFactor);// Mathf.RoundToInt(width + warpingAmplitude);
@@ -262,11 +257,28 @@ public class TestGenerator
         var data = new T[adjustedWidth, adjustedHeight]; //imgdata.data,
         var offset = new Vector2(-warpingAmplitude, -warpingAmplitude); // * 0.825f;
 
+        float fbm(float x, float y, float scale = 1f, int octaves = 1, float lacunarity = 2f, float gain = 0.5f)
+        {
+            var total = 0f;
+            var amplitude = 1f;
+            var frequency = 1f;
+
+            for (var i = 0; i < octaves; i++)
+            {
+                var v = Mathf.PerlinNoise(x / scale * frequency, y / scale * frequency) * amplitude;
+                total += v;
+                frequency *= lacunarity;
+                amplitude *= gain;
+            }
+
+            return total;
+        }
+
         T pattern(float x, float y, float scale = 1f, int octaves = 1, float lacunarity = 2f, float gain = 0.5f)
         {
             var q = new Vector2(
-                    perlin.fbm(x, y, 123.1231f, scale, octaves, lacunarity, gain),
-                    perlin.fbm(x + 5.2f, y + 1.3f, 123.1231f, scale, octaves, lacunarity, gain));
+                    fbm(x + seed, y + seed, scale, octaves, lacunarity, gain),
+                    fbm(x + 5.2f + seed, y + 1.3f + seed, scale, octaves, lacunarity, gain));
 
             // alter domain warping amplitude depending on biome
             var indexX = Mathf.RoundToInt(x + (warpingAmplitude * q[0]));

@@ -106,7 +106,7 @@ public class MapPreview : MonoBehaviour
         {
             var perlin = new Perlin(heightMapSettings.noiseSettings.seed);
             var map = TestGenerator.GenerateVorotoiMap(meshSettings.numberOfVerticesPerLine, meshSettings.numberOfVerticesPerLine, numberOfBiomes, heightMapSettings.noiseSettings.seed, edgeCuttoffPercent);
-            var warpedMap = TestGenerator.DomainWarpMap(map, meshSettings.numberOfVerticesPerLine, meshSettings.numberOfVerticesPerLine, map[0, 0], perlin, warpingAmplitude, adjustmentFactor);
+            var warpedMap = TestGenerator.DomainWarpMap(map, meshSettings.numberOfVerticesPerLine, meshSettings.numberOfVerticesPerLine, heightMapSettings.noiseSettings.seed, map[0, 0], warpingAmplitude, adjustmentFactor);
             var color = new Color[Mathf.RoundToInt(meshSettings.numberOfVerticesPerLine * adjustmentFactor) * Mathf.RoundToInt(meshSettings.numberOfVerticesPerLine * adjustmentFactor)];
 
             for (var i = 0; i < color.Length; i++)

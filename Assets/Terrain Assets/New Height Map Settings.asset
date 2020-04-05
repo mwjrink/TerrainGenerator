@@ -18,7 +18,7 @@ MonoBehaviour:
     octaves: 7
     lacunarity: 2
     offset: {x: 0, y: 0}
-    seed: 2
+    seed: 10
     scale: 100
     normalizeMode: 1
   heightScale: 75
