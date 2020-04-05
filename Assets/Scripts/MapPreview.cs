@@ -13,7 +13,8 @@ public class MapPreview : MonoBehaviour
         FalloffMap,
         NewMapGen,
         DomainWarping,
-        DomainWarpedNewMap
+        DomainWarpedNewMap,
+        DomainWarpedAndMeshedNewMap
     }
 
     public DrawMode drawMode;
@@ -24,6 +25,7 @@ public class MapPreview : MonoBehaviour
     public Erosion erosion;
 
     public Material terrainMaterial;
+    public Material MapMaterial;
 
     [Range(0, MeshSettings.numberSupportedLODs - 1)]
     public int editorPreviewLevelOfDetail;
@@ -42,10 +44,14 @@ public class MapPreview : MonoBehaviour
     public float edgeCuttoffPercent;
     [Range(0.0f, 10000.0f)]
     public float adjustmentFactor;
+    [Range(0.0f, 10000.0f)]
+    public float noiseScale;
+    [Range(0.0f, 10000.0f)]
+    public float heightScale;
 
     void DebugWriteFile(string name, float[,] data, int size)
     {
-        using (var file = new StreamWriter(@"C:\Users\Max\Desktop\" + name + ".txt", true))
+        using (var file = new StreamWriter(Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "/" + name + ".txt", true))
         {
             for (var y = 0; y < size; y++)
             {
@@ -104,19 +110,40 @@ public class MapPreview : MonoBehaviour
         }
         else if (drawMode == DrawMode.DomainWarpedNewMap)
         {
-            var perlin = new Perlin(heightMapSettings.noiseSettings.seed);
             var map = TestGenerator.GenerateVorotoiMap(meshSettings.numberOfVerticesPerLine, meshSettings.numberOfVerticesPerLine, numberOfBiomes, heightMapSettings.noiseSettings.seed, edgeCuttoffPercent);
             var warpedMap = TestGenerator.DomainWarpMap(map, meshSettings.numberOfVerticesPerLine, meshSettings.numberOfVerticesPerLine, heightMapSettings.noiseSettings.seed, map[0, 0], warpingAmplitude, adjustmentFactor);
-            var color = new Color[Mathf.RoundToInt(meshSettings.numberOfVerticesPerLine * adjustmentFactor) * Mathf.RoundToInt(meshSettings.numberOfVerticesPerLine * adjustmentFactor)];
+            var warpedSize = Mathf.RoundToInt(meshSettings.numberOfVerticesPerLine * adjustmentFactor);
+            var color = new Color[warpedSize * warpedSize];
 
             for (var i = 0; i < color.Length; i++)
             {
-                var x = i % Mathf.RoundToInt(meshSettings.numberOfVerticesPerLine * adjustmentFactor);
-                var y = i / Mathf.RoundToInt(meshSettings.numberOfVerticesPerLine * adjustmentFactor);
+                var x = i % warpedSize;
+                var y = i / warpedSize;
                 color[i] = warpedMap[x, y].color;
             }
 
-            DrawTexture(TextureGenerator.TextureFromColorMap(color, Mathf.RoundToInt(meshSettings.numberOfVerticesPerLine * adjustmentFactor), Mathf.RoundToInt(meshSettings.numberOfVerticesPerLine * adjustmentFactor)));
+            DrawTexture(TextureGenerator.TextureFromColorMap(color, warpedSize, warpedSize));
+        }
+        else if (drawMode == DrawMode.DomainWarpedAndMeshedNewMap)
+        {
+            var map = TestGenerator.GenerateVorotoiMap(meshSettings.numberOfVerticesPerLine, meshSettings.numberOfVerticesPerLine, numberOfBiomes, heightMapSettings.noiseSettings.seed, edgeCuttoffPercent);
+            var warpedMap = TestGenerator.DomainWarpMap(map, meshSettings.numberOfVerticesPerLine, meshSettings.numberOfVerticesPerLine, heightMapSettings.noiseSettings.seed, map[0, 0], warpingAmplitude, adjustmentFactor);
+            var warpedSize = Mathf.RoundToInt(meshSettings.numberOfVerticesPerLine * adjustmentFactor);
+
+            var heightMap = TestGenerator.TestFillHeightMap(warpedMap, warpedSize, warpedSize, heightMapSettings.noiseSettings.seed, noiseScale, heightScale);
+            var color = new Color[warpedSize * warpedSize];
+
+            for (var i = 0; i < color.Length; i++)
+            {
+                var x = i % warpedSize;
+                var y = i / warpedSize;
+                color[i] = warpedMap[x, y].color;
+            }
+
+            DebugWriteFile("warpedHeightMap", heightMap, warpedSize);
+
+            meshSettings.numberOfVerticesPerLine = warpedSize;
+            DrawMesh(MeshGenerator.GenerateTerrainMesh(heightMap, meshSettings, editorPreviewLevelOfDetail), TextureGenerator.TextureFromColorMap(color, warpedSize, warpedSize));
         }
     }
 
@@ -129,12 +156,18 @@ public class MapPreview : MonoBehaviour
         meshFilter.gameObject.SetActive(false);
     }
 
-    public void DrawMesh(MeshData meshData)
+    public void DrawMesh(MeshData meshData, Texture2D texture = null)
     {
         meshFilter.sharedMesh = meshData.CreateMesh();
 
         textureRenderer.gameObject.SetActive(false);
         meshFilter.gameObject.SetActive(true);
+
+        if (texture)
+        {
+            meshFilter.gameObject.GetComponent<MeshRenderer>().sharedMaterial = MapMaterial;
+            textureRenderer.sharedMaterial.mainTexture = texture;
+        }
     }
 
     void OnTextureValuesUpdated()

@@ -15,7 +15,8 @@ public class MeshSettings : UpdatableData
     public int chunkSizeIndex;
 
     // num vertices per line of mesh rendered at LOD = 0. in addition to the bordered vertices
-    public int numberOfVerticesPerLine => supportedChunkSizes[chunkSizeIndex] + 5;
+    public int numberOfVerticesPerLine { get => _numberOfVerticesPerLine ?? supportedChunkSizes[chunkSizeIndex] + 5; set => _numberOfVerticesPerLine = value; }
+    private int? _numberOfVerticesPerLine = null;
 
     public float MeshWorldSize => (numberOfVerticesPerLine - 3) * meshScale;
 }
