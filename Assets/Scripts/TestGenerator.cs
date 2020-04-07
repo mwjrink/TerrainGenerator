@@ -7,8 +7,28 @@ using UnityEngine;
 
 public class TestGenerator
 {
+    public enum BiomeKey
+    {
+        water,
+        sand,
+        other
+    }
+
+    public static Color[] colors = new Color[] {
+        Color.cyan,
+        Color.grey,
+        Color.magenta,
+        Color.red,
+        Color.yellow,
+        Color.black,
+        Color.white,
+        Color.green
+    };
+
     public struct Biome
     {
+        public BiomeKey key;
+
         public float baseHeight;
         public Vector2 maximumHeightVariance; // x is down, y is up
         public float maximumRateOfChange;
@@ -64,80 +84,86 @@ public class TestGenerator
         public Biome biome;
     }
 
-    public static Cell sand(vDst[] dst) => new Cell
+    public static Biome sand = new Biome
     {
-        dst = dst,
-        biome = new Biome
-        {
-            color = new Color(255f / 255f, 224f / 255f, 173f / 255f),
+        color = new Color(255f / 255f, 224f / 255f, 173f / 255f),
 
-            baseHeight = 0f,
-            maximumHeightVariance = new Vector2(0, 10), // x is down, y is up
-            maximumRateOfChange = 0.5f,
-            moisture = 1.0f, // super high here but we dont want any hydraulic erosion
-            averageTemperature = 20f, // determines thermal erosion
-            temperatureVariance = new Vector2(10f, 10f) // x is down, y is up
-        }
+        key = BiomeKey.sand,
+        baseHeight = 0f,
+        maximumHeightVariance = new Vector2(0, 10), // x is down, y is up
+        maximumRateOfChange = 0.5f,
+        moisture = 1.0f, // super high here but we dont want any hydraulic erosion
+        averageTemperature = 20f, // determines thermal erosion
+        temperatureVariance = new Vector2(10f, 10f) // x is down, y is up
     };
 
-    public static Cell water(vDst[] dst) => new Cell
+    public static Biome water = new Biome
     {
-        dst = dst,
-        biome = new Biome
-        {
-            color = new Color(0f / 255f, 191f / 255f, 255f / 255f),
+        color = new Color(0f / 255f, 191f / 255f, 255f / 255f),
 
-            baseHeight = 0f,
-            maximumHeightVariance = new Vector2(100f, 0f), // x is down, y is up
-            maximumRateOfChange = 100.0f,
-            moisture = 100.0f, // super high here but we dont want any hydraulic erosion
-            averageTemperature = 15f, // determines thermal erosion
-            temperatureVariance = new Vector2(10f, 10f) // x is down, y is up
-        }
+        key = BiomeKey.water,
+        baseHeight = 0f,
+        maximumHeightVariance = new Vector2(100f, 0f), // x is down, y is up
+        maximumRateOfChange = 100.0f,
+        moisture = 100.0f, // super high here but we dont want any hydraulic erosion
+        averageTemperature = 15f, // determines thermal erosion
+        temperatureVariance = new Vector2(10f, 10f) // x is down, y is up
     };
 
-    public static Cell[,] GenerateVorotoiMap(int width, int height, int numberOfBiomes, int seed, float edgeCuttoffPercent)
+    private static vPoint[] GeneratePoints(System.Random random, int width, int height, int numberOfBiomes, float edgeCuttoffPercent)
     {
-        var lesserCutOff = edgeCuttoffPercent;
-        var greaterCutOff = 1.0f - lesserCutOff;
+        var maxSupportedGridWidth = 10;
+        var gridWidth = 0;
+        for (var i = 1; i <= maxSupportedGridWidth; i++)
+        {
+            if (numberOfBiomes <= i * i)
+            {
+                gridWidth = i;
+                break;
+            }
+        }
 
-        var map = new Cell[width, height];
-        var random = new System.Random(seed);
+        if (gridWidth == 0)
+        {
+            throw new ArgumentOutOfRangeException("Unsupported number of biomes.");
+        }
 
-        var voronoiPoints = new vPoint[numberOfBiomes];
+        var voronoiPoints = new vPoint[gridWidth * gridWidth];
 
-        var colors = new Color[] {
-            Color.cyan,
-            Color.clear,
-            Color.grey,
-            Color.magenta,
-            Color.red,
-            Color.yellow,
-            Color.black,
-            Color.white,
-            Color.green,
-            Color.blue
-        };
         var takenColors = new List<int>(numberOfBiomes);
 
-        for (var v = 0; v < numberOfBiomes; v++)
+        var cellWidth = Mathf.RoundToInt(width / gridWidth);
+        var cellHeight = Mathf.RoundToInt(height / gridWidth);
+        var cellsToFill = Enumerable.Repeat(false, gridWidth * gridWidth).ToList();
+
+        var filled = 0;
+        while (filled < numberOfBiomes)
         {
-            var colorIndex = random.Next(0, colors.Length - 1);
+            int index;
             do
             {
-                colorIndex = random.Next(0, colors.Length - 1);
-            } while (takenColors.Contains(colorIndex));
-            takenColors.Add(colorIndex);
+                index = random.Next(0, gridWidth * gridWidth);
+            } while (cellsToFill[index]);
+
+            cellsToFill[index] = true;
+            filled++;
+        }
+
+        var normoColors = 0;
+        for (var v = 0; v < gridWidth * gridWidth; v++)
+        {
+            var x = v % gridWidth;
+            var y = v / gridWidth;
 
             voronoiPoints[v] = new vPoint
             {
                 // randomly generate one point on every cell of an evenly spaced grid (makes a much more even layout)
                 position = new Vector2(
-                    random.Next(Mathf.RoundToInt(width * lesserCutOff), Mathf.RoundToInt(width * greaterCutOff)),
-                    random.Next(Mathf.RoundToInt(height * lesserCutOff), Mathf.RoundToInt(height * greaterCutOff))),
-                biome = new Biome
+                    (width * edgeCuttoffPercent) + (cellWidth * x) + random.Next(0, cellWidth),
+                    (height * edgeCuttoffPercent) + (cellHeight * y) + random.Next(0, cellHeight)),
+                biome = cellsToFill[v] ? new Biome
                 {
-                    color = colors[colorIndex],
+                    color = colors[normoColors],
                     baseHeight = random.Next(10, 1000),
                     maximumHeightVariance = new Vector2(random.Next(0, 1000), random.Next(0, 1000)), // x is down, y is up
                     maximumRateOfChange = random.Next(0, 100000) * 0.01f, // TODO: @Max, use an array or something of possible values, as it stand we could get 1000, 999, 998 which are essentially the same in terms of the terrain itself
@@ -145,19 +171,35 @@ public class TestGenerator
                     averageTemperature = random.Next(-50, 50), // determines thermal erosion // TODO: @Max, have this average around 10-20 or so
                     temperatureVariance = new Vector2(random.Next(0, 50), random.Next(0, 50)), // x is down, y is up
 
-                    transitionDst = random.Next(0, Mathf.RoundToInt((width * 0.025f) + (height * 0.025f)))
-                }
+                    transitionDst = random.Next(0, Mathf.RoundToInt((width * 0.25f) + (height * 0.25f)))
+                } : water
             };
+
+            if (cellsToFill[v])
+            {
+                normoColors++;
+            }
         }
 
-        var dst = new List<vDst>(numberOfBiomes);
+        return voronoiPoints;
+    }
 
-        for (var v = 0; v < numberOfBiomes; v++)
-            dst.Add(new vDst { dst = 1.0f, index = -1 });
+    public static Cell[,] GenerateVoronoiMap(int width, int height, int numberOfBiomes, int seed, float edgeCuttoffPercent)
+    {
+        var lesserCutOff = edgeCuttoffPercent;
+        var greaterCutOff = 1.0f - lesserCutOff;
+
+        var map = new Cell[width, height];
+        var random = new System.Random(seed);
+
+        var voronoiPoints = GeneratePoints(random, width, height, numberOfBiomes, edgeCuttoffPercent);
+
+        var dst = Enumerable.Repeat(new vDst { dst = 1.0f, index = -1 }, numberOfBiomes).ToList();
 
         for (var j = 0; j < height; j++)
             for (var i = 0; i < width; i++)
             {
+                // could optimize this using the grid if we wanted to
                 for (var v = 0; v < numberOfBiomes; v++)
                 {
                     dst[v] = new vDst
@@ -170,56 +212,61 @@ public class TestGenerator
                 dst.Sort((a, b) => (int)Mathf.Sign(b.dst - a.dst));
 
                 var waterShrinkFactor = 5.0f;
-                var beachSize = 100.0f;
-                var beachTransitionFactor = 4.0f;
+                var beachSize = 75.0f;
+                var beachTransitionFactor = 2.0f;
+
+                var biome1 = voronoiPoints[dst[0].index].biome;
+                var biome2 = voronoiPoints[dst[1].index].biome;
 
                 var left = dst[0].dst > i * waterShrinkFactor;
                 var right = dst[0].dst > (width - i) * waterShrinkFactor;
                 var top = dst[0].dst > j * waterShrinkFactor;
                 var bot = dst[0].dst > (height - j) * waterShrinkFactor;
-                var edge = i < width * lesserCutOff || i > width * greaterCutOff || j < height * lesserCutOff || j > height * greaterCutOff;
-                var isWater = top || bot || left || right || edge;
+                var isEdge = i < width * lesserCutOff || i > width * greaterCutOff || j < height * lesserCutOff || j > height * greaterCutOff;
+
+                var isWater = top || bot || left || right || isEdge || biome1.key == BiomeKey.water;
                 if (isWater)
                 {
-                    var biome1 = voronoiPoints[dst[0].index].biome;
-                    var isSand = !edge && (
-                        left ? Mathf.Abs((i * waterShrinkFactor) - dst[0].dst) < (biome1.transitionDst + beachSize) / 2.0f :
-                        right ? Mathf.Abs(((width - i) * waterShrinkFactor) - dst[0].dst) < (biome1.transitionDst + beachSize) / 2.0f :
-                        top ? Mathf.Abs((j * waterShrinkFactor) - dst[0].dst) < (biome1.transitionDst + beachSize) / 2.0f :
-                        bot ? Mathf.Abs(((height - j) * waterShrinkFactor) - dst[0].dst) < (biome1.transitionDst + beachSize) / 2.0f :
-                        throw new Exception("This is impossible."));
+                    var isSand = biome1.key == BiomeKey.water ? (dst[0].dst - dst[1].dst) < (biome1.transitionDst + beachSize) / 2.0f :
+                        !isEdge && left ? Mathf.Abs((i * waterShrinkFactor) - dst[0].dst) < (biome1.transitionDst + beachSize) / 2.0f :
+                        !isEdge && right ? Mathf.Abs(((width - i) * waterShrinkFactor) - dst[0].dst) < (biome1.transitionDst + beachSize) / 2.0f :
+                        !isEdge && top ? Mathf.Abs((j * waterShrinkFactor) - dst[0].dst) < (biome1.transitionDst + beachSize) / 2.0f :
+                        !isEdge && bot ? Mathf.Abs(((height - j) * waterShrinkFactor) - dst[0].dst) < (biome1.transitionDst + beachSize) / 2.0f :
+                        throw new Exception("This is impossible.");
 
                     if (isSand)
                     {
                         var transitionDst =
+                        biome1.key == BiomeKey.water ? (dst[0].dst - dst[1].dst) / (biome1.transitionDst * beachTransitionFactor) :
                         left ? Mathf.Abs((i * waterShrinkFactor) - dst[0].dst) / (biome1.transitionDst * beachTransitionFactor) :
                         right ? Mathf.Abs(((width - i) * waterShrinkFactor) - dst[0].dst) / (biome1.transitionDst * beachTransitionFactor) :
                         top ? Mathf.Abs((j * waterShrinkFactor) - dst[0].dst) / (biome1.transitionDst * beachTransitionFactor) :
                         bot ? Mathf.Abs(((height - j) * waterShrinkFactor) - dst[0].dst) / (biome1.transitionDst * beachTransitionFactor) :
                         throw new Exception("This is also impossible.");
+
                         var inTransition = transitionDst <= 1.0f;
 
-                        map[i, j] = inTransition ?
-                        // transition sand
-                        new Cell
+                        map[i, j] = inTransition ? new Cell
                         {
                             dst = new vDst[] { dst[0] },
-                            biome = Biome.Lerp(sand(null).biome, biome1, 1.0f - transitionDst)
-                        } :
-                        // sand
-                        sand(new vDst[] { dst[0] });
+                            biome = Biome.Lerp(sand, biome1, 1.0f - transitionDst)
+                        } : new Cell
+                        {
+                            dst = new vDst[] { dst[0] },
+                            biome = water
+                        };
                     }
                     else
                     {
-                        // water
-                        map[i, j] = water(new vDst[] { dst[0] });
+                        map[i, j] = new Cell
+                        {
+                            dst = new vDst[] { dst[0] },
+                            biome = water
+                        };
                     }
                 }
                 else
                 {
-                    var biome1 = voronoiPoints[dst[0].index].biome;
-                    var biome2 = voronoiPoints[dst[1].index].biome;
-
                     var transitionDst = (biome1.transitionDst + biome2.transitionDst) / 2.0f;
                     var inTransition = Mathf.Abs(dst[0].dst - dst[1].dst) < transitionDst;
 
@@ -232,7 +279,7 @@ public class TestGenerator
                         : new Cell
                         {
                             dst = new vDst[] { dst[0] },
-                            biome =  biome1
+                            biome = biome1
                         };
                 }
             }
@@ -289,23 +336,6 @@ public class TestGenerator
         return data;
     }
 
-    private static float fbm(float x, float y, float scale = 1f, int octaves = 1, float lacunarity = 2f, float gain = 0.5f)
-    {
-        var total = 0f;
-        var amplitude = 1f;
-        var frequency = 1f;
-
-        for (var i = 0; i < octaves; i++)
-        {
-            var v = Mathf.PerlinNoise(x / scale * frequency, y / scale * frequency) * amplitude;
-            total += v;
-            frequency *= lacunarity;
-            amplitude *= gain;
-        }
-
-        return total;
-    }
-
     // TODO: @Max, data etc is super memory and cpu inefficien. Not an issue for smaller maps but it is for huge maps.
     public static T[,] DomainWarpMap<T>(T[,] original, int width, int height, int seed, T fallback, float warpingAmplitude = 80.0f, float adjustmentFactor = 1.2f) // NoiseSettings settings { seed, scale, ... }
     {
@@ -314,6 +344,23 @@ public class TestGenerator
         var adjustedHeight = Mathf.RoundToInt(height * adjustmentFactor);// Mathf.RoundToInt(height + warpingAmplitude);
         var data = new T[adjustedWidth, adjustedHeight]; //imgdata.data,
         var offset = new Vector2(-warpingAmplitude, -warpingAmplitude); // * 0.825f;
+
+        float fbm(float x, float y, float scale = 1f, int octaves = 1, float lacunarity = 2f, float gain = 0.5f)
+        {
+            var total = 0f;
+            var amplitude = 1f;
+            var frequency = 1f;
+
+            for (var i = 0; i < octaves; i++)
+            {
+                var v = Mathf.PerlinNoise(x / scale * frequency, y / scale * frequency) * amplitude;
+                total += v;
+                frequency *= lacunarity;
+                amplitude *= gain;
+            }
+
+            return total;
+        }
 
         T pattern(float x, float y, float scale = 1f, int octaves = 1, float lacunarity = 2f, float gain = 0.5f)
         {
@@ -337,44 +384,5 @@ public class TestGenerator
             }
 
         return data;
-    }
-
-    public static Cell[,] FillHeightMap(Cell[,] original, int width, int height, int seed, float noiseScale)
-    {
-        var copy = new Cell[width, height];
-        for (var y = 0; y < height; y++)
-            for (var x = 0; x < width; x++)
-            {
-                var octaves = 1;
-                var lacunarity = 2f;
-                var gain = 0.5f;
-
-                var value = fbm(x + seed, y + seed, noiseScale, octaves, lacunarity, gain);
-                copy[x, y].height = value;
-                Debug.Log(value);
-            }
-
-        return copy;
-    }
-
-    public static float[,] TestFillHeightMap(Cell[,] original, int width, int height, int seed, float noiseScale, float heightScale)
-    {
-        var copy = new float[width, height];
-        for (var y = 0; y < height; y++)
-            for (var x = 0; x < width; x++)
-            {
-                var octaves = 5;
-                var lacunarity = 4f;
-                var gain = 0.2f;
-
-                var cell = original[x, y];
-
-                // math
-
-                var value = fbm(x + seed, y + seed, noiseScale, octaves, lacunarity, gain) * heightScale;
-                copy[x, y] = value;
-            }
-
-        return copy;
     }
 }
