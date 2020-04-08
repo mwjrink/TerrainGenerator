@@ -48,6 +48,7 @@ public class MapPreview : MonoBehaviour
     public float noiseScale;
     [Range(0.0f, 10000.0f)]
     public float heightScale;
+    public bool useGrid;
 
     void DebugWriteFile(string name, float[,] data, int size)
     {
@@ -85,7 +86,7 @@ public class MapPreview : MonoBehaviour
         }
         else if (drawMode == DrawMode.NewMapGen)
         {
-            var map = TestGenerator.GenerateVoronoiMap(meshSettings.numberOfVerticesPerLine, meshSettings.numberOfVerticesPerLine, numberOfBiomes, heightMapSettings.noiseSettings.seed, edgeCuttoffPercent);
+            var map = TestGenerator.GenerateVoronoiMap(meshSettings.numberOfVerticesPerLine, meshSettings.numberOfVerticesPerLine, numberOfBiomes, heightMapSettings.noiseSettings.seed, edgeCuttoffPercent, useGrid);
             var color = new Color[meshSettings.numberOfVerticesPerLine * meshSettings.numberOfVerticesPerLine];
 
             for (var i = 0; i < meshSettings.numberOfVerticesPerLine * meshSettings.numberOfVerticesPerLine; i++)
@@ -110,8 +111,8 @@ public class MapPreview : MonoBehaviour
         }
         else if (drawMode == DrawMode.DomainWarpedNewMap)
         {
-            var map = TestGenerator.GenerateVoronoiMap(meshSettings.numberOfVerticesPerLine, meshSettings.numberOfVerticesPerLine, numberOfBiomes, heightMapSettings.noiseSettings.seed, edgeCuttoffPercent);
-            var warpedMap = TestGenerator.DomainWarpMap(map, meshSettings.numberOfVerticesPerLine, meshSettings.numberOfVerticesPerLine, heightMapSettings.noiseSettings.seed, map[0, 0], warpingAmplitude, adjustmentFactor);
+            var map = TestGenerator.GenerateVoronoiMap(meshSettings.numberOfVerticesPerLine, meshSettings.numberOfVerticesPerLine, numberOfBiomes, heightMapSettings.noiseSettings.seed, edgeCuttoffPercent, useGrid);
+            var warpedMap = TestGenerator.DomainWarpMap(map, meshSettings.numberOfVerticesPerLine, meshSettings.numberOfVerticesPerLine, heightMapSettings.noiseSettings.seed, map[0, 0], warpingAmplitude * meshSettings.numberOfVerticesPerLine / 240f, adjustmentFactor, meshSettings.numberOfVerticesPerLine * 0.1f);
             var warpedSize = Mathf.RoundToInt(meshSettings.numberOfVerticesPerLine * adjustmentFactor);
             var color = new Color[warpedSize * warpedSize];
 
@@ -124,27 +125,27 @@ public class MapPreview : MonoBehaviour
 
             DrawTexture(TextureGenerator.TextureFromColorMap(color, warpedSize, warpedSize));
         }
-        //else if (drawMode == DrawMode.DomainWarpedAndMeshedNewMap)
-        //{
-        //    var map = TestGenerator.GenerateVorotoiMap(meshSettings.numberOfVerticesPerLine, meshSettings.numberOfVerticesPerLine, numberOfBiomes, heightMapSettings.noiseSettings.seed, edgeCuttoffPercent);
-        //    var warpedMap = TestGenerator.DomainWarpMap(map, meshSettings.numberOfVerticesPerLine, meshSettings.numberOfVerticesPerLine, heightMapSettings.noiseSettings.seed, map[0, 0], warpingAmplitude, adjustmentFactor);
-        //    var warpedSize = Mathf.RoundToInt(meshSettings.numberOfVerticesPerLine * adjustmentFactor);
+        else if (drawMode == DrawMode.DomainWarpedAndMeshedNewMap)
+        {
+            var map = TestGenerator.GenerateVoronoiMap(meshSettings.numberOfVerticesPerLine, meshSettings.numberOfVerticesPerLine, numberOfBiomes, heightMapSettings.noiseSettings.seed, edgeCuttoffPercent, useGrid);
+            var warpedMap = TestGenerator.DomainWarpMap(map, meshSettings.numberOfVerticesPerLine, meshSettings.numberOfVerticesPerLine, heightMapSettings.noiseSettings.seed, map[0, 0], warpingAmplitude * meshSettings.numberOfVerticesPerLine / 240f, adjustmentFactor, meshSettings.numberOfVerticesPerLine * 0.1f);
+            var warpedSize = Mathf.RoundToInt(meshSettings.numberOfVerticesPerLine * adjustmentFactor);
 
-        //    var heightMap = TestGenerator.TestFillHeightMap(warpedMap, warpedSize, warpedSize, heightMapSettings.noiseSettings.seed, noiseScale, heightScale);
-        //    var color = new Color[warpedSize * warpedSize];
+            var heightMap = TestGenerator.TestFillHeightMap(warpedMap, warpedSize, warpedSize, heightMapSettings.noiseSettings.seed, noiseScale, heightScale);
+            var color = new Color[warpedSize * warpedSize];
 
-        //    for (var i = 0; i < color.Length; i++)
-        //    {
-        //        var x = i % warpedSize;
-        //        var y = i / warpedSize;
-        //        color[i] = warpedMap[x, y].color;
-        //    }
+            for (var i = 0; i < color.Length; i++)
+            {
+                var x = i % warpedSize;
+                var y = i / warpedSize;
+                color[i] = warpedMap[x, y].biome.color;
+            }
 
-        //    DebugWriteFile("warpedHeightMap", heightMap, warpedSize);
+            DebugWriteFile("warpedHeightMap", heightMap, warpedSize);
 
-        //    meshSettings.numberOfVerticesPerLine = warpedSize;
-        //    DrawMesh(MeshGenerator.GenerateTerrainMesh(heightMap, meshSettings, editorPreviewLevelOfDetail), TextureGenerator.TextureFromColorMap(color, warpedSize, warpedSize));
-        //}
+            meshSettings.numberOfVerticesPerLine = warpedSize;
+            DrawMesh(MeshGenerator.GenerateTerrainMesh(heightMap, meshSettings, editorPreviewLevelOfDetail), TextureGenerator.TextureFromColorMap(color, warpedSize, warpedSize));
+        }
     }
 
     public void DrawTexture(Texture2D texture)
